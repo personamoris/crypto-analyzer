@@ -1,4 +1,4 @@
-package com.service.crypto_analyzer;
+package com.service.crypto_analyzer.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

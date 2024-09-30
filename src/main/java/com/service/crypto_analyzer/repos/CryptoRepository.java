@@ -1,4 +1,4 @@
-package com.service.crypto_analyzer;
+package com.service.crypto_analyzer.repos;
 
 import com.service.crypto_analyzer.model.Crypto;
 import org.springframework.data.jpa.repository.JpaRepository;

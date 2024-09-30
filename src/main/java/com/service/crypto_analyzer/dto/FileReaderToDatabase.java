@@ -1,8 +1,9 @@
-package com.service.crypto_analyzer;
+package com.service.crypto_analyzer.dto;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import com.service.crypto_analyzer.model.Crypto;
+import com.service.crypto_analyzer.repos.CryptoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

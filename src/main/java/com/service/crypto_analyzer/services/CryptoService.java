@@ -1,6 +1,8 @@
-package com.service.crypto_analyzer;
+package com.service.crypto_analyzer.services;
 
+import com.service.crypto_analyzer.dto.NormalizedCrypto;
 import com.service.crypto_analyzer.model.Crypto;
+import com.service.crypto_analyzer.repos.CryptoRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -149,9 +151,9 @@ public class CryptoService {
      * Retrieves a list of normalized cryptocurrency data, sorted in descending order by normalized value.
      * The normalized value is calculated as (max price - min price) / min price for each symbol.
      *
-     * @return a list of {@link NormalizedCryptoDTO} objects representing the sorted normalized values
+     * @return a list of {@link NormalizedCrypto} objects representing the sorted normalized values
      */
-    public List<NormalizedCryptoDTO> getSortedCryptosByNormalizedValue() {
+    public List<NormalizedCrypto> getSortedCryptosByNormalizedValue() {
         logger.info("Fetching and sorting cryptocurrencies by normalized value");
         Map<String, List<Crypto>> groupedBySymbol = getCryptoFindAll().stream()
                 .collect(Collectors.groupingBy(Crypto::getSymbol));
@@ -163,13 +165,13 @@ public class CryptoService {
                     double minPrice = cryptosForSymbol.stream().mapToDouble(Crypto::getPrice).min().orElse(0.0);
                     double normalizedValue = minPrice > 0 ? (maxPrice - minPrice) / minPrice : 0;
 
-                    NormalizedCryptoDTO normalizedCrypto = new NormalizedCryptoDTO();
+                    NormalizedCrypto normalizedCrypto = new NormalizedCrypto();
                     normalizedCrypto.setSymbol(symbol);
                     normalizedCrypto.setMaxPrice(maxPrice);
                     normalizedCrypto.setMinPrice(minPrice);
                     normalizedCrypto.setNormalizedValue(normalizedValue);
                     return normalizedCrypto;
-                }).sorted(Comparator.comparingDouble(NormalizedCryptoDTO::getNormalizedValue).reversed())
+                }).sorted(Comparator.comparingDouble(NormalizedCrypto::getNormalizedValue).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -177,9 +179,9 @@ public class CryptoService {
      * Retrieves the cryptocurrency with the highest normalized range for a specific day.
      *
      * @param dateString the date string in "dd-MM-yyyy" format
-     * @return the {@link NormalizedCryptoDTO} with the highest normalized range for the specified day
+     * @return the {@link NormalizedCrypto} with the highest normalized range for the specified day
      */
-    public NormalizedCryptoDTO getCryptoWithHighestNormalizedRangeForDay(String dateString) {
+    public NormalizedCrypto getCryptoWithHighestNormalizedRangeForDay(String dateString) {
         logger.info("Fetching cryptocurrency with the highest normalized range for day: {}", dateString);
         LocalDate day = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
         LocalDateTime startOfDay = day.atStartOfDay();
@@ -191,6 +193,7 @@ public class CryptoService {
         List<Crypto> cryptos = cryptoRepository.findByTimestampBetween(startTimestamp, endTimestamp);
         if (cryptos.isEmpty()) {
             logger.warn("No records found for the specified day: {}", dateString);
+            System.err.println(dateString);
             throw new RuntimeException("No records found for the specified day.");
         }
 
@@ -203,9 +206,9 @@ public class CryptoService {
                     double minPrice = calculateMinPrice(cryptoGroup);
                     double maxPrice = calculateMaxPrice(cryptoGroup);
                     double normalizedRange = (maxPrice - minPrice) / minPrice;
-                    return new NormalizedCryptoDTO(symbol, normalizedRange);
+                    return new NormalizedCrypto(symbol, normalizedRange);
                 })
-                .max(Comparator.comparingDouble(NormalizedCryptoDTO::getNormalizedValue))
+                .max(Comparator.comparingDouble(NormalizedCrypto::getNormalizedValue))
                 .orElseThrow(() -> new RuntimeException("Could not calculate normalized range."));
     }
 }

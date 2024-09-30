@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: crypto-advisor-deployment
+  name: crypto-analyzer-deployment
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: crypto-advisor
+      app: crypto-analyzer
   template:
     metadata:
       labels:
-        app: crypto-advisor
+        app: crypto-analyzer
     spec:
       containers:
-        - name: crypto-advisor
-          image: <dockerhub-username>/crypto-advisor:latest
+        - name: crypto-analyzer
+          image: <dockerhub-username>/crypto-analyzer:latest
           ports:
             - containerPort: 8080
           env:

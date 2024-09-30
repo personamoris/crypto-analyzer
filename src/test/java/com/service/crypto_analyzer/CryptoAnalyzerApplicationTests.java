@@ -1,18 +1,26 @@
 package com.service.crypto_analyzer;
 
+import com.service.crypto_analyzer.dto.FileReaderToDatabase;
+import com.service.crypto_analyzer.dto.NormalizedCrypto;
+import com.service.crypto_analyzer.model.Crypto;
+import com.service.crypto_analyzer.repos.CryptoRepository;
+import com.service.crypto_analyzer.services.CryptoService;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 class CryptoAnalyzerApplicationTests {
 
-	private final CryptoService cryptoService = new CryptoService();
+	@Autowired
+	private CryptoService cryptoService;
 
 	@Test
 	public void testCalculateOldestPrice() {
@@ -71,7 +79,7 @@ class CryptoAnalyzerApplicationTests {
 		);
 
 		double normalizedRange = cryptoService.calculateNormalizedRange(cryptos);
-		assertEquals(0.354, normalizedRange, 0.001);  // Intervalul normalizat calculat
+		assertEquals(0.354, normalizedRange, 0.001);
 	}
 
 	@Test
@@ -94,4 +102,20 @@ class CryptoAnalyzerApplicationTests {
 		assertTrue(ethNormalized > btcNormalized);
 	}
 
+	@Test
+	public void testGetCryptoWithHighestNormalizedRangeForDay() {
+		NormalizedCrypto result = cryptoService.getCryptoWithHighestNormalizedRangeForDay("01-01-2022");
+		assertEquals("XRP", result.getSymbol());
+		assertEquals( 0.019281754639672227, result.getNormalizedValue());
+	}
+
+	@Test
+	public void testGetSortedCryptosByNormalizedValue() {
+		List<NormalizedCrypto> result = cryptoService.getSortedCryptosByNormalizedValue();
+		assertEquals("ETH" , result.get(0).getSymbol());
+		assertEquals("XRP" , result.get(1).getSymbol());
+		assertEquals("DOGE" , result.get(2).getSymbol());
+		assertEquals("LTC" , result.get(3).getSymbol());
+		assertEquals("BTC" , result.get(4).getSymbol());
+	}
 }

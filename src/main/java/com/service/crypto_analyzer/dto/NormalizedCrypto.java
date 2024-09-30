@@ -5,7 +5,7 @@ package com.service.crypto_analyzer.dto;
  * This class is used to encapsulate the symbol of a cryptocurrency, its maximum and minimum prices,
  * and the normalized value which represents the price variation as (max price - min price) / min price.
  */
-public class NormalizedCryptoDTO {
+public class NormalizedCrypto {
 
     private String symbol;
     private double maxPrice;
@@ -15,7 +15,7 @@ public class NormalizedCryptoDTO {
     /**
      * Default constructor for creating an empty {@code NormalizedCryptoDTO}.
      */
-    public NormalizedCryptoDTO() {
+    public NormalizedCrypto() {
     }
 
     /**
@@ -24,7 +24,7 @@ public class NormalizedCryptoDTO {
      * @param symbol the symbol of the cryptocurrency (e.g., BTC, ETH)
      * @param normalizedValue the normalized value representing the price variation
      */
-    public NormalizedCryptoDTO(String symbol, double normalizedValue) {
+    public NormalizedCrypto(String symbol, double normalizedValue) {
         this.symbol = symbol;
         this.normalizedValue = normalizedValue;
     }

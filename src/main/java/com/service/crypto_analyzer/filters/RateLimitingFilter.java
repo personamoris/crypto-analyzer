@@ -1,4 +1,4 @@
-package com.service.crypto_analyzer;
+package com.service.crypto_analyzer.filters;
 
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;

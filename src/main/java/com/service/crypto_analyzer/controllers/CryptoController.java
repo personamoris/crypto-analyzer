@@ -1,5 +1,9 @@
-package com.service.crypto_analyzer;
+package com.service.crypto_analyzer.controllers;
 
+import com.service.crypto_analyzer.services.CryptoService;
+import com.service.crypto_analyzer.dto.FileReaderToDatabase;
+import com.service.crypto_analyzer.dto.NormalizedCrypto;
+import com.service.crypto_analyzer.model.Crypto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +48,7 @@ public class CryptoController {
         List<Crypto> cryptos = cryptoService.getCryptoDataBySymbol(symbol);
 
         if (cryptos.isEmpty()) {
-            return "Criptomoneda nu a fost găsită.";
+            return "The cryptocurrency was not found.";
         }
 
         double minPrice = cryptoService.calculateMinPrice(cryptos);
@@ -64,10 +68,10 @@ public class CryptoController {
      */
     @GetMapping("/highest-range")
     public String getCryptoWithHighestNormalizedRange() {
-        List<NormalizedCryptoDTO> sortedCryptosByNormalizedValue = cryptoService.getSortedCryptosByNormalizedValue();
+        List<NormalizedCrypto> sortedCryptosByNormalizedValue = cryptoService.getSortedCryptosByNormalizedValue();
         StringBuilder response = new StringBuilder();
-        for (NormalizedCryptoDTO normalizedCrypto : sortedCryptosByNormalizedValue) {
-            response.append(String.format("Crypto: %s  Valoare normalizat: %f\n", normalizedCrypto.getSymbol(), normalizedCrypto.getNormalizedValue()));
+        for (NormalizedCrypto normalizedCrypto : sortedCryptosByNormalizedValue) {
+            response.append(String.format("Crypto: %s  Normalized Value: %f\n", normalizedCrypto.getSymbol(), normalizedCrypto.getNormalizedValue()));
         }
         return response.toString();
     }
@@ -81,9 +85,14 @@ public class CryptoController {
     @GetMapping("/{date}/highest-normalized-range")
     public String getCryptoWithHighestNormalizedRangeForDay(@PathVariable String date) {
         // Calls the service method to find the cryptocurrency with the highest normalized range for the specified date
-        NormalizedCryptoDTO normalizedCryptoDTO = cryptoService.getCryptoWithHighestNormalizedRangeForDay(date);
+        NormalizedCrypto normalizedCrypto = cryptoService.getCryptoWithHighestNormalizedRangeForDay(date);
+
+        if (normalizedCrypto.getSymbol().isEmpty()) {
+            return "No records found for the specified date.";
+        }
+
         return String.format("Crypto %s:\nNormalized Range: %.4f",
-                normalizedCryptoDTO.getSymbol(),
-                normalizedCryptoDTO.getNormalizedValue());
+                normalizedCrypto.getSymbol(),
+                normalizedCrypto.getNormalizedValue());
     }
 }
