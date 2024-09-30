@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-advisor-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: crypto-advisor
+  template:
+    metadata:
+      labels:
+        app: crypto-advisor
+    spec:
+      containers:
+        - name: crypto-advisor
+          image: <dockerhub-username>/crypto-advisor:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
