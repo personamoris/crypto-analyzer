@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -51,8 +52,8 @@ public class CryptoController {
             return "The cryptocurrency was not found.";
         }
 
-        double minPrice = cryptoService.calculateMinPrice(cryptos);
-        double maxPrice = cryptoService.calculateMaxPrice(cryptos);
+        BigDecimal minPrice = cryptoService.calculateMinPrice(cryptos);
+        BigDecimal maxPrice = cryptoService.calculateMaxPrice(cryptos);
         Crypto oldest = cryptoService.getOldestCrypto(cryptos);
         Crypto newest = cryptoService.getNewestCrypto(cryptos);
 

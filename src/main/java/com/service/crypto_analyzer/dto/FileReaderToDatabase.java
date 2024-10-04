@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class FileReaderToDatabase {
                     Crypto crypto = new Crypto();
                     crypto.setTimestamp(Long.parseLong(values[0]));
                     crypto.setSymbol(values[1]);
-                    crypto.setPrice(Double.parseDouble(values[2]));
+                    crypto.setPrice(BigDecimal.ZERO);
 
                     cryptos.add(crypto);
                 }
