@@ -89,9 +89,9 @@ public class CryptoService {
      * @param cryptos a list of {@link Crypto} entities
      * @return the minimum price
      */
-    public double calculateMinPrice(List<Crypto> cryptos) {
+    public BigDecimal calculateMinPrice(List<Crypto> cryptos) {
         logger.debug("Calculating minimum price for a list of {} cryptos", cryptos.size());
-        double minPrice = cryptos.stream().mapToDouble(Crypto::getPrice).min().orElse(0.0);
+        BigDecimal minPrice = cryptos.stream().map(Crypto::getPrice).min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
         logger.debug("Calculated min price: {}", minPrice);
         return minPrice;
     }
@@ -102,9 +102,9 @@ public class CryptoService {
      * @param cryptos a list of {@link Crypto} entities
      * @return the maximum price
      */
-    public double calculateMaxPrice(List<Crypto> cryptos) {
+    public BigDecimal calculateMaxPrice(List<Crypto> cryptos) {
         logger.debug("Calculating maximum price for a list of {} cryptos", cryptos.size());
-        double maxPrice = cryptos.stream().mapToDouble(Crypto::getPrice).max().orElse(0.0);
+        BigDecimal maxPrice = cryptos.stream().map(Crypto::getPrice).max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
         logger.debug("Calculated max price: {}", maxPrice);
         return maxPrice;
     }
@@ -137,14 +137,18 @@ public class CryptoService {
      * @param cryptos a list of {@link Crypto} entities
      * @return the normalized range, rounded to three decimal places
      */
-    public double calculateNormalizedRange(List<Crypto> cryptos) {
+    public BigDecimal calculateNormalizedRange(List<Crypto> cryptos) {
         logger.debug("Calculating normalized range for {} cryptos", cryptos.size());
-        double minPrice = calculateMinPrice(cryptos);
-        double maxPrice = calculateMaxPrice(cryptos);
-        double normalizedRange = (maxPrice - minPrice) / minPrice;
-        BigDecimal bd = new BigDecimal(normalizedRange).setScale(3, RoundingMode.HALF_UP);
-        logger.debug("Calculated normalized range: {}", bd.doubleValue());
-        return bd.doubleValue();
+        BigDecimal minPrice = calculateMinPrice(cryptos);
+        BigDecimal maxPrice = calculateMaxPrice(cryptos);
+        if (minPrice.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal normalizedRange = (maxPrice.subtract(minPrice)).divide(minPrice, 3, RoundingMode.HALF_UP);
+            logger.debug("Calculated normalized range: {}", normalizedRange);
+            return normalizedRange;
+        } else {
+            logger.warn("Min price is zero, cannot calculate normalized range");
+            return BigDecimal.ZERO;
+        }
     }
 
     /**
@@ -161,15 +165,20 @@ public class CryptoService {
         return groupedBySymbol.entrySet().stream().map(entry -> {
                     String symbol = entry.getKey();
                     List<Crypto> cryptosForSymbol = entry.getValue();
-                    double maxPrice = cryptosForSymbol.stream().mapToDouble(Crypto::getPrice).max().orElse(0.0);
-                    double minPrice = cryptosForSymbol.stream().mapToDouble(Crypto::getPrice).min().orElse(0.0);
-                    double normalizedValue = minPrice > 0 ? (maxPrice - minPrice) / minPrice : 0;
+                    BigDecimal maxPrice = cryptosForSymbol.stream().map(Crypto::getPrice).max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+                    BigDecimal minPrice = cryptosForSymbol.stream().map(Crypto::getPrice).min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+                    BigDecimal normalizedValue = BigDecimal.ZERO;
+                    if (minPrice.compareTo(BigDecimal.ZERO) > 0) {
+                        normalizedValue = maxPrice.subtract(minPrice)
+                                .divide(minPrice, 3, RoundingMode.HALF_UP);
+                    }
+
 
                     NormalizedCrypto normalizedCrypto = new NormalizedCrypto();
                     normalizedCrypto.setSymbol(symbol);
                     normalizedCrypto.setMaxPrice(maxPrice);
                     normalizedCrypto.setMinPrice(minPrice);
-                    normalizedCrypto.setNormalizedValue(normalizedValue);
+                    normalizedCrypto.setNormalizedValue(normalizedValue.doubleValue());
                     return normalizedCrypto;
                 }).sorted(Comparator.comparingDouble(NormalizedCrypto::getNormalizedValue).reversed())
                 .collect(Collectors.toList());
@@ -203,10 +212,14 @@ public class CryptoService {
                 .map(entry -> {
                     String symbol = entry.getKey();
                     List<Crypto> cryptoGroup = entry.getValue();
-                    double minPrice = calculateMinPrice(cryptoGroup);
-                    double maxPrice = calculateMaxPrice(cryptoGroup);
-                    double normalizedRange = (maxPrice - minPrice) / minPrice;
-                    return new NormalizedCrypto(symbol, normalizedRange);
+                    BigDecimal minPrice = calculateMinPrice(cryptoGroup);
+                    BigDecimal maxPrice = calculateMaxPrice(cryptoGroup);
+                    BigDecimal normalizedValue = BigDecimal.ZERO;
+                    if (minPrice.compareTo(BigDecimal.ZERO) > 0) {
+                        normalizedValue = maxPrice.subtract(minPrice)
+                                .divide(minPrice, 3, RoundingMode.HALF_UP);
+                    }
+                    return new NormalizedCrypto(symbol, normalizedValue.doubleValue());
                 })
                 .max(Comparator.comparingDouble(NormalizedCrypto::getNormalizedValue))
                 .orElseThrow(() -> new RuntimeException("Could not calculate normalized range."));

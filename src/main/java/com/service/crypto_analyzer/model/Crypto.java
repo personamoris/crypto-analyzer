@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
+import java.math.BigDecimal;
+
 /**
  * Represents a cryptocurrency data entity, including its symbol, timestamp, and price.
  * This class is used for storing and accessing cryptocurrency data from a database.
@@ -41,7 +43,7 @@ public class Crypto {
     /**
      * The price of the cryptocurrency at the recorded timestamp.
      */
-    private double price;
+    private BigDecimal price;
 
     /**
      * Default constructor required by JPA.
@@ -57,7 +59,7 @@ public class Crypto {
      * @param timestamp the timestamp in milliseconds when the price was recorded
      * @param price the price of the cryptocurrency at the given timestamp
      */
-    public Crypto(String symbol, long timestamp, double price) {
+    public Crypto(String symbol, long timestamp, BigDecimal price) {
         this.symbol = symbol;
         this.timestamp = timestamp;
         this.price = price;
@@ -122,7 +124,7 @@ public class Crypto {
      *
      * @return the price of the cryptocurrency
      */
-    public double getPrice() {
+    public BigDecimal getPrice() {
         return price;
     }
 
@@ -131,7 +133,7 @@ public class Crypto {
      *
      * @param price the new price to set
      */
-    public void setPrice(double price) {
+    public void setPrice(BigDecimal price) {
         this.price = price;
     }
 }

@@ -1,4 +1,7 @@
 package com.service.crypto_analyzer.dto;
+
+import java.math.BigDecimal;
+
 /**
  * Data Transfer Object (DTO) representing normalized cryptocurrency data.
  * <p>
@@ -8,8 +11,8 @@ package com.service.crypto_analyzer.dto;
 public class NormalizedCrypto {
 
     private String symbol;
-    private double maxPrice;
-    private double minPrice;
+    private BigDecimal maxPrice;
+    private BigDecimal minPrice;
     private double normalizedValue;
 
     /**
@@ -52,7 +55,7 @@ public class NormalizedCrypto {
      *
      * @return the maximum price
      */
-    public double getMaxPrice() {
+    public BigDecimal getMaxPrice() {
         return maxPrice;
     }
 
@@ -61,7 +64,7 @@ public class NormalizedCrypto {
      *
      * @param maxPrice the maximum price to set
      */
-    public void setMaxPrice(double maxPrice) {
+    public void setMaxPrice(BigDecimal maxPrice) {
         this.maxPrice = maxPrice;
     }
 
@@ -70,7 +73,7 @@ public class NormalizedCrypto {
      *
      * @return the minimum price
      */
-    public double getMinPrice() {
+    public BigDecimal getMinPrice() {
         return minPrice;
     }
 
@@ -79,7 +82,7 @@ public class NormalizedCrypto {
      *
      * @param minPrice the minimum price to set
      */
-    public void setMinPrice(double minPrice) {
+    public void setMinPrice(BigDecimal minPrice) {
         this.minPrice = minPrice;
     }
 
