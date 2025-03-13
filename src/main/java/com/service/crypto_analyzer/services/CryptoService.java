@@ -11,9 +11,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -40,8 +42,10 @@ public class CryptoService {
      */
     public long convertGMTToMillis(String dateTimeString) {
         logger.debug("Converting GMT date time string to millis: {}", dateTimeString);
-        LocalDateTime localDateTime = LocalDateTime.parse(dateTimeString);
-        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.systemDefault());
+
+        LocalDateTime localDateTime = LocalDateTime.parse(dateTimeString, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.of("UTC"));
+
         long millis = zonedDateTime.toInstant().toEpochMilli();
         logger.debug("Converted millis: {}", millis);
         return millis;
@@ -55,9 +59,10 @@ public class CryptoService {
      */
     public String convertMillisToGMT(long millis) {
         logger.debug("Converting millis to GMT: {}", millis);
+
         LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(millis), ZoneOffset.UTC);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        String formattedDate = dateTime.format(formatter);
+        String formattedDate = dateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+
         logger.debug("Converted date time string: {}", formattedDate);
         return formattedDate;
     }
@@ -91,7 +96,11 @@ public class CryptoService {
      */
     public BigDecimal calculateMinPrice(List<Crypto> cryptos) {
         logger.debug("Calculating minimum price for a list of {} cryptos", cryptos.size());
-        BigDecimal minPrice = cryptos.stream().map(Crypto::getPrice).min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+        BigDecimal minPrice = cryptos.stream()
+                .map(Crypto::getPrice)
+                .filter(Objects::nonNull)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
         logger.debug("Calculated min price: {}", minPrice);
         return minPrice;
     }
@@ -104,7 +113,11 @@ public class CryptoService {
      */
     public BigDecimal calculateMaxPrice(List<Crypto> cryptos) {
         logger.debug("Calculating maximum price for a list of {} cryptos", cryptos.size());
-        BigDecimal maxPrice = cryptos.stream().map(Crypto::getPrice).max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+        BigDecimal maxPrice = cryptos.stream()
+                .map(Crypto::getPrice)
+                .filter(Objects::nonNull)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
         logger.debug("Calculated max price: {}", maxPrice);
         return maxPrice;
     }
@@ -162,25 +175,29 @@ public class CryptoService {
         Map<String, List<Crypto>> groupedBySymbol = getCryptoFindAll().stream()
                 .collect(Collectors.groupingBy(Crypto::getSymbol));
 
-        return groupedBySymbol.entrySet().stream().map(entry -> {
+        return groupedBySymbol.entrySet().stream()
+                .map(entry -> {
                     String symbol = entry.getKey();
                     List<Crypto> cryptosForSymbol = entry.getValue();
-                    BigDecimal maxPrice = cryptosForSymbol.stream().map(Crypto::getPrice).max(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
-                    BigDecimal minPrice = cryptosForSymbol.stream().map(Crypto::getPrice).min(Comparator.naturalOrder()).orElse(BigDecimal.ZERO);
+
+                    BigDecimal maxPrice = calculateMaxPrice(cryptosForSymbol);
+                    BigDecimal minPrice = calculateMinPrice(cryptosForSymbol);
                     BigDecimal normalizedValue = BigDecimal.ZERO;
+
                     if (minPrice.compareTo(BigDecimal.ZERO) > 0) {
                         normalizedValue = maxPrice.subtract(minPrice)
-                                .divide(minPrice, 3, RoundingMode.HALF_UP);
+                                .divide(minPrice, 10, RoundingMode.HALF_UP);
                     }
-
 
                     NormalizedCrypto normalizedCrypto = new NormalizedCrypto();
                     normalizedCrypto.setSymbol(symbol);
                     normalizedCrypto.setMaxPrice(maxPrice);
                     normalizedCrypto.setMinPrice(minPrice);
-                    normalizedCrypto.setNormalizedValue(normalizedValue.doubleValue());
+                    normalizedCrypto.setNormalizedValue(normalizedValue);
+
                     return normalizedCrypto;
-                }).sorted(Comparator.comparingDouble(NormalizedCrypto::getNormalizedValue).reversed())
+                })
+                .sorted(Comparator.comparing(NormalizedCrypto::getNormalizedValue).reversed())
                 .collect(Collectors.toList());
     }
 
@@ -192,18 +209,24 @@ public class CryptoService {
      */
     public NormalizedCrypto getCryptoWithHighestNormalizedRangeForDay(String dateString) {
         logger.info("Fetching cryptocurrency with the highest normalized range for day: {}", dateString);
-        LocalDate day = LocalDate.parse(dateString, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+        LocalDate day;
+        try {
+            day = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid date format. Please use YYYY-MM-DD.");
+        }
+
         LocalDateTime startOfDay = day.atStartOfDay();
         LocalDateTime endOfDay = day.atTime(23, 59, 59);
 
-        long startTimestamp = convertGMTToMillis(startOfDay.toString());
-        long endTimestamp = convertGMTToMillis(endOfDay.toString());
+        long startTimestamp = startOfDay.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli();
+        long endTimestamp = endOfDay.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli();
 
         List<Crypto> cryptos = cryptoRepository.findByTimestampBetween(startTimestamp, endTimestamp);
         if (cryptos.isEmpty()) {
             logger.warn("No records found for the specified day: {}", dateString);
-            System.err.println(dateString);
-            throw new RuntimeException("No records found for the specified day.");
+            return new NormalizedCrypto("N/A", BigDecimal.ZERO);  // ✅ Return default object instead of throwing an exception
         }
 
         return cryptos.stream()
@@ -212,16 +235,20 @@ public class CryptoService {
                 .map(entry -> {
                     String symbol = entry.getKey();
                     List<Crypto> cryptoGroup = entry.getValue();
+
                     BigDecimal minPrice = calculateMinPrice(cryptoGroup);
                     BigDecimal maxPrice = calculateMaxPrice(cryptoGroup);
-                    BigDecimal normalizedValue = BigDecimal.ZERO;
+                    BigDecimal normalizedRange = BigDecimal.ZERO;
+
                     if (minPrice.compareTo(BigDecimal.ZERO) > 0) {
-                        normalizedValue = maxPrice.subtract(minPrice)
-                                .divide(minPrice, 3, RoundingMode.HALF_UP);
+                        normalizedRange = maxPrice.subtract(minPrice)
+                                .divide(minPrice, 10, RoundingMode.HALF_UP);
                     }
-                    return new NormalizedCrypto(symbol, normalizedValue.doubleValue());
+
+                    return new NormalizedCrypto(symbol, normalizedRange);
                 })
-                .max(Comparator.comparingDouble(NormalizedCrypto::getNormalizedValue))
-                .orElseThrow(() -> new RuntimeException("Could not calculate normalized range."));
+                .max(Comparator.comparing(NormalizedCrypto::getNormalizedValue))
+                .orElse(new NormalizedCrypto("N/A", BigDecimal.ZERO));  // ✅ Default return value
     }
+
 }

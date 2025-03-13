@@ -54,8 +54,7 @@ public class FileReaderToDatabase {
                     Crypto crypto = new Crypto();
                     crypto.setTimestamp(Long.parseLong(values[0]));
                     crypto.setSymbol(values[1]);
-                    crypto.setPrice(BigDecimal.ZERO);
-
+                    crypto.setPrice(new BigDecimal(values[2]));
                     cryptos.add(crypto);
                 }
             } catch (IOException | CsvValidationException e) {

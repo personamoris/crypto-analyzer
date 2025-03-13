@@ -13,7 +13,7 @@ public class NormalizedCrypto {
     private String symbol;
     private BigDecimal maxPrice;
     private BigDecimal minPrice;
-    private double normalizedValue;
+    private BigDecimal normalizedValue;
 
     /**
      * Default constructor for creating an empty {@code NormalizedCryptoDTO}.
@@ -27,7 +27,7 @@ public class NormalizedCrypto {
      * @param symbol the symbol of the cryptocurrency (e.g., BTC, ETH)
      * @param normalizedValue the normalized value representing the price variation
      */
-    public NormalizedCrypto(String symbol, double normalizedValue) {
+    public NormalizedCrypto(String symbol, BigDecimal normalizedValue) {
         this.symbol = symbol;
         this.normalizedValue = normalizedValue;
     }
@@ -91,7 +91,7 @@ public class NormalizedCrypto {
      *
      * @return the normalized value
      */
-    public double getNormalizedValue() {
+    public BigDecimal getNormalizedValue() {
         return normalizedValue;
     }
 
@@ -100,7 +100,7 @@ public class NormalizedCrypto {
      *
      * @param normalizedValue the normalized value to set
      */
-    public void setNormalizedValue(double normalizedValue) {
+    public void setNormalizedValue(BigDecimal normalizedValue) {
         this.normalizedValue = normalizedValue;
     }
 }

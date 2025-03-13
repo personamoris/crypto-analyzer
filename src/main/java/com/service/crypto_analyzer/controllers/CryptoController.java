@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * REST controller that provides API endpoints for cryptocurrency data operations.
@@ -57,8 +60,17 @@ public class CryptoController {
         Crypto oldest = cryptoService.getOldestCrypto(cryptos);
         Crypto newest = cryptoService.getNewestCrypto(cryptos);
 
-        return String.format("Crypto %s:\nOldest Price: %f\nNewest Price: %f\nMin Price: %f\nMax Price: %f",
-                symbol, oldest.getPrice(), newest.getPrice(), minPrice, maxPrice);
+        // Define DecimalFormat with a comma as the decimal separator
+        DecimalFormatSymbols symbols = new DecimalFormatSymbols(Locale.FRANCE);
+        symbols.setDecimalSeparator(',');
+        DecimalFormat df = new DecimalFormat("0.####", symbols); // Removes unnecessary trailing zeros
+
+        return String.format("Crypto %s:\nOldest Price: %s\nNewest Price: %s\nMin Price: %s\nMax Price: %s",
+                symbol,
+                df.format(oldest.getPrice().stripTrailingZeros()),
+                df.format(newest.getPrice().stripTrailingZeros()),
+                df.format(minPrice.stripTrailingZeros()),
+                df.format(maxPrice.stripTrailingZeros()));
     }
 
     /**
