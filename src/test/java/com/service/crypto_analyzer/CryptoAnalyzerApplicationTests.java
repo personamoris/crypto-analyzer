@@ -1,12 +1,10 @@
 package com.service.crypto_analyzer;
 
 import com.service.crypto_analyzer.model.Crypto;
-import com.service.crypto_analyzer.repos.CryptoRepository;
 import com.service.crypto_analyzer.services.CryptoService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -17,9 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class CryptoAnalyzerApplicationTests {
-
-	@MockBean
-	private CryptoRepository cryptoRepository;
 
 	@Autowired
 	private CryptoService cryptoService;
