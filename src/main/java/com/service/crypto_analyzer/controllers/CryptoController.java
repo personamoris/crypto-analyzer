@@ -1,10 +1,13 @@
 package com.service.crypto_analyzer.controllers;
 
+import com.service.crypto_analyzer.components.CryptoStats;
 import com.service.crypto_analyzer.services.CryptoService;
 import com.service.crypto_analyzer.dto.FileReaderToDatabase;
 import com.service.crypto_analyzer.dto.NormalizedCrypto;
 import com.service.crypto_analyzer.model.Crypto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -13,6 +16,7 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * REST controller that provides API endpoints for cryptocurrency data operations.
@@ -47,8 +51,8 @@ public class CryptoController {
      * @return a formatted string containing the cryptocurrency statistics
      * @throws IOException if an error occurs while reading the data
      */
-    @GetMapping("/{symbol}/stats")
-    public String getCryptoStats(@PathVariable String symbol) throws IOException {
+    @GetMapping("/{symbol}/stats-string")
+    public String getCryptoStatsAsString(@PathVariable String symbol) throws IOException {
         List<Crypto> cryptos = cryptoService.getCryptoDataBySymbol(symbol);
 
         if (cryptos.isEmpty()) {
@@ -79,8 +83,8 @@ public class CryptoController {
      *
      * @return a formatted string containing the list of cryptocurrencies and their normalized range values
      */
-    @GetMapping("/highest-range")
-    public String getCryptoWithHighestNormalizedRange() {
+    @GetMapping("/highest-range-string")
+    public String getCryptoWithHighestNormalizedRangeAsString() {
         List<NormalizedCrypto> sortedCryptosByNormalizedValue = cryptoService.getSortedCryptosByNormalizedValue();
         StringBuilder response = new StringBuilder();
         for (NormalizedCrypto normalizedCrypto : sortedCryptosByNormalizedValue) {
@@ -95,9 +99,8 @@ public class CryptoController {
      * @param date the date in the format YYYY-MM-DD for which the highest normalized range is calculated
      * @return a formatted string containing the cryptocurrency and its normalized range for the specified day
      */
-    @GetMapping("/{date}/highest-normalized-range")
-    public String getCryptoWithHighestNormalizedRangeForDay(@PathVariable String date) {
-        // Calls the service method to find the cryptocurrency with the highest normalized range for the specified date
+    @GetMapping("/{date}/highest-normalized-range-string")
+    public String getCryptoWithHighestNormalizedRangeForDayAsString(@PathVariable String date) {
         NormalizedCrypto normalizedCrypto = cryptoService.getCryptoWithHighestNormalizedRangeForDay(date);
 
         if (normalizedCrypto.getSymbol().isEmpty()) {
@@ -107,5 +110,47 @@ public class CryptoController {
         return String.format("Crypto %s:\nNormalized Range: %.4f",
                 normalizedCrypto.getSymbol(),
                 normalizedCrypto.getNormalizedValue());
+    }
+
+    @GetMapping("/{symbol}/stats")
+    public CryptoStats getCryptoStatsAsJson(@PathVariable String symbol) throws IOException {
+        List<Crypto> cryptos = cryptoService.getCryptoDataBySymbol(symbol);
+
+        if (cryptos.isEmpty()) {
+            return null; // Sau aruncă o excepție pe care o gestionezi mai târziu
+        }
+        BigDecimal minPrice = cryptoService.calculateMinPrice(cryptos);
+        BigDecimal maxPrice = cryptoService.calculateMaxPrice(cryptos);
+        Crypto oldest = cryptoService.getOldestCrypto(cryptos);
+        Crypto newest = cryptoService.getNewestCrypto(cryptos);
+
+
+        return new CryptoStats(symbol, oldest.getPrice(),newest.getPrice(),minPrice,maxPrice);
+    }
+
+    @GetMapping("/highest-range")
+    public ResponseEntity<NormalizedCrypto> getCryptoWithHighestNormalizedRangeAsJson() {
+            return cryptoService.getSortedCryptosByNormalizedValue().stream()
+                    .findFirst()
+                    .map(ResponseEntity::ok)
+                    .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+    }
+
+    /**
+     * Retrieves the cryptocurrency with the highest normalized range for a specific day.
+     *
+     * @param date the date in the format YYYY-MM-DD for which the highest normalized range is calculated
+     * @return a JSON containing the cryptocurrency and its normalized range for the specified day
+     */
+    @GetMapping("/{date}/highest-normalized-range")
+    public ResponseEntity<?> getCryptoWithHighestNormalizedRangeForDayAsJson(@PathVariable String date) {
+        NormalizedCrypto normalizedCrypto = cryptoService.getCryptoWithHighestNormalizedRangeForDay(date);
+
+        if (normalizedCrypto == null || normalizedCrypto.getSymbol().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No records found for the specified date."));
+        }
+
+        return ResponseEntity.ok(normalizedCrypto);
     }
 }
