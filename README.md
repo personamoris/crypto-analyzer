@@ -34,6 +34,7 @@ The app reads cryptocurrency data from CSV files and stores it into a PostgreSQL
 - **OpenCSV** for CSV file parsing
 - **Bucket4j** for rate limiting
 - **JaCoCo** for code coverage
+- **LomBok**
 - **Docker & Kubernetes** for containerization and deployment
 
 ### Installation and Setup
@@ -84,34 +85,34 @@ The default port for the application is **8080**. You can access the endpoints a
 ### Endpoints
 
 #### 1. Retrieves statistics for a specific cryptocurrency based on its symbol.
-- **URL**: `/api/crypto/{symbol}/stats`
+- **URL**: `/api/crypto/{symbol}/stats-string`
 - **Method**: `GET`
 - **Query Params**:
   - `symbol` (String, symbol)
   
 Example:
 ```bash
-curl -X GET "http://localhost:8080/api/crypto/BTC/stats"
+curl -X GET "http://localhost:8080/api/crypto/BTC/stats-string"
 ```
 
 #### 2. Get a sorted list of cryptos based on normalized range
-- **URL**: `/api/crypto/highest-range`
+- **URL**: `/api/crypto/highest-range-string`
 - **Method**: `GET`
 
 Example:
 ```bash
-curl "http://localhost:8080/api/crypto/highest-range"
+curl "http://localhost:8080/api/crypto/highest-range-string"
 ```
 
 #### 3. Get the cryptocurrency with the highest normalized range for a specific day
-- **URL**: `/api/crypto/{date}/highest-normalized-range`
+- **URL**: `/api/crypto/{date}/highest-normalized-range-string`
 - **Method**: `GET`
 - **Query Params**:
-  - `date` (String, required) - Date in format `dd-MM-yyyy`
+  - `date` (String, required) - Date in format `yyyy-dd-MM`
   
 Example:
 ```bash
-curl -X GET "http://localhost:8080/api/crypto/01-01-2022/highest-normalized-range"
+curl -X GET "http://localhost:8080/api/crypto/2022-01-01/highest-normalized-range-string"
 ```
 
 ### Rate Limiting
