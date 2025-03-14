@@ -34,6 +34,7 @@ The app reads cryptocurrency data from CSV files and stores it into a PostgreSQL
 - **OpenCSV** for CSV file parsing
 - **Bucket4j** for rate limiting
 - **JaCoCo** for code coverage
+- **LomBok**
 - **Docker & Kubernetes** for containerization and deployment
 
 ### Installation and Setup
