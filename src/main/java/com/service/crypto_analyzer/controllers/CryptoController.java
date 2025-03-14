@@ -112,6 +112,14 @@ public class CryptoController {
                 normalizedCrypto.getNormalizedValue());
     }
 
+    /**
+     * Retrieves statistics for a specific cryptocurrency based on its symbol.
+     * The stats include the oldest price, newest price, minimum price, and maximum price.
+     *
+     * @param symbol the symbol of the cryptocurrency (e.g., BTC, ETH)
+     * @return a JSON containing the cryptocurrency statistics
+     * @throws IOException if an error occurs while reading the data
+     */
     @GetMapping("/{symbol}/stats")
     public CryptoStats getCryptoStatsAsJson(@PathVariable String symbol) throws IOException {
         List<Crypto> cryptos = cryptoService.getCryptoDataBySymbol(symbol);
@@ -128,6 +136,12 @@ public class CryptoController {
         return new CryptoStats(symbol, oldest.getPrice(),newest.getPrice(),minPrice,maxPrice);
     }
 
+    /**
+     * Retrieves the list of cryptocurrencies ordered by the highest normalized range, in descending order.
+     * The normalized range is calculated based on the price variation of each cryptocurrency.
+     *
+     * @return a JSON containing the list of cryptocurrencies and their normalized range values
+     */
     @GetMapping("/highest-range")
     public ResponseEntity<NormalizedCrypto> getCryptoWithHighestNormalizedRangeAsJson() {
             return cryptoService.getSortedCryptosByNormalizedValue().stream()
